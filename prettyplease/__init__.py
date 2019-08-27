@@ -1,3 +1,3 @@
 #!/usr/bin/env python
 
-from .prettyplease import PrettyPlease
+from .prettyplease import corner
