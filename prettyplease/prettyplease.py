@@ -8,12 +8,17 @@ def corner(data):
     ndim = data.shape[1]
     fig, axes = plt.subplots(nrows=ndim, ncols=ndim, squeeze=False)
     for col in range(ndim):
-        axes[col, col].hist(data[:, col])
+        for row in range(ndim):
+            # DO THIS FOR ALL AXES
+            axes[row, col].axis('square')
+        midpoints, marginalized_data = marginalize_mcmc(data, col)
+        axes[col, col].plot(midpoints, marginalized_data, drawstyle='steps-mid')
         for row in range(col+1, ndim):
+            # DO THIS FOR THE LOWER TRIANGLE
             axes[row, col].hist2d(data[:, col], data[:, row])
         for row in range(col):
+            # DO THIS FOR THE UPPER TRIANGLE
             axes[row, col].axis('off')
-
     return fig
 
 def marginalize_mcmc(data, index=0, bins=100, xrange=None, normalize=True):
