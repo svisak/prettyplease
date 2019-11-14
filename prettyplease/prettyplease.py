@@ -35,7 +35,7 @@ def corner(data, bins=50, figsize=(10,10)):
     fig.subplots_adjust(wspace=0, hspace=0)
     return fig
 
-def flattened_diagonal(chain_list, bins=100, alpha=0.8, chain_labels=None, parameter_labels=None):
+def flattened_diagonal(chain_list, bins=100, alpha=0.8, chain_labels=None, parameter_labels=None, vlines=None):
     """Compare marginalized distributions from several MCMC samplings."""
     ndim = chain_list[0].shape[1]
     base_size = 4
@@ -58,6 +58,8 @@ def flattened_diagonal(chain_list, bins=100, alpha=0.8, chain_labels=None, param
                 ax.hist(chain[:, i], bins=bins, density=True, alpha=alpha, label=chain_labels[j])
             if parameter_labels is not None:
                 ax.set_xlabel(parameter_labels[i])
+            if vlines is not None:
+                ax.axvline(vlines[i], color='green', linestyle='--')
             ax.set_yticks([])
             ax.legend()
             i += 1
