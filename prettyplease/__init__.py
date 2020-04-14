@@ -1,7 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from .prettyplease import corner
-from .prettyplease import flattened_diagonal
-from .prettyplease import marginalize_mcmc
-from .prettyplease import normalize_plot
-from .prettyplease import marginal_plots
+from .prettyplease import compare_marginals
+from .prettyplease import traceplot
