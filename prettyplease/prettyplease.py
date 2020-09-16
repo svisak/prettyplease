@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
 
 def contour_levels(grid, percentiles=[0.68, 0.95, 0.997]):
@@ -11,18 +12,31 @@ def contour_levels(grid, percentiles=[0.68, 0.95, 0.997]):
     cutoffs = np.searchsorted(pct, np.array(percentiles) ** 2)
     return np.sort(sorted_[cutoffs])
 
-def corner(data, bins=50, percentiles=[0.68, 0.95, 0.997], labels=None, title=None, show_estimates=True, fmt='.3f', grayscale=False, figsize=(10,10)):
+def corner(data, bins=50, percentiles=[0.68, 0.95, 0.997], labels=None, title=None, show_estimates=True, n_ticks=4, fmt='.3f', grayscale=False, figsize=(10,10)):
     """Create a pretty corner plot."""
-    #density_cmap = LinearSegmentedColormap.from_list("density_cmap", ['k', (1, 1, 1, 0)])
     colors = ['white', 'gray', 'black'] if grayscale else ['white', 'blue','purple']
     density_cmap = LinearSegmentedColormap.from_list("density_cmap", colors=colors)
     ndim = data.shape[1]
-    fig, axes = plt.subplots(nrows=ndim, ncols=ndim, squeeze=False, figsize=figsize)
+
+    tmp = 5 + 1.25 * ndim # TODO Unsure how well this scaling works! Seems fine with 2x2 and 10x10 grids ...
+    fig, axes = plt.subplots(nrows=ndim, ncols=ndim, squeeze=False, figsize=(tmp,tmp))
 
     # Upper triangle
     for col in range(ndim):
         for row in range(col):
             axes[row, col].axis('off')
+    # Diagonal
+    for i in range(ndim):
+        x = data[:, i].flatten()
+        ax = axes[i, i]
+        ax.hist(x, bins=bins, color='black', histtype='step', linewidth=0.5)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        if show_estimates:
+            median = np.percentile(x, 50)
+            low = np.percentile(x, 16) - median
+            high = np.percentile(x, 84) - median
+            ax.set_title(rf'${median:{fmt}}_{{{low:{fmt}}}}^{{+{high:{fmt}}}}$')
     # Lower triangle
     for col in range(ndim):
         for row in range(col+1, ndim):
@@ -32,33 +46,43 @@ def corner(data, bins=50, percentiles=[0.68, 0.95, 0.997], labels=None, title=No
             ax.set_yticks([])
             x1 = data[:, col]
             x2 = data[:, row]
-            hist = np.histogram2d(x1, x2, bins=bins)
-            h = hist[0].T
-            vmin = (np.max(h)-np.min(h)) / 50 + np.min(h) # Make low levels white
-            ax.contourf(h, cmap=density_cmap, levels=30, vmin=vmin)
-            contourlevels = contour_levels(hist[0].T, percentiles)
-            ax.contour(h, colors='gray', linewidths=0.8, levels=contourlevels, alpha=1.0)
-    # Diagonal
-    for i in range(ndim):
-        x = data[:, i].flatten()
-        ax = axes[i, i]
-        ax.hist(x, bins=bins, color='black', histtype='step')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        if show_estimates:
-            median = np.percentile(x, 50)
-            low = np.percentile(x, 16) - median
-            high = np.percentile(x, 84) - median
-            ax.set_title(rf'${median:{fmt}}_{{{low:{fmt}}}}^{{+{high:{fmt}}}}$')
-    # Bottom
+            hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins)
+            hist = hist.T
+            extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+            vmin = (np.max(hist)-np.min(hist)) / 50 + np.min(hist) # Make low levels white
+            ax.contourf(hist, extent=extent, cmap=density_cmap, levels=30, vmin=vmin)
+            contourlevels = contour_levels(hist, percentiles)
+            ax.contour(hist, extent=extent, colors='gray', linewidths=0.8, levels=contourlevels, alpha=1.0)
+
+    # Bottom labels
     for col in range(ndim):
         if labels is not None:
             axes[-1, col].set_xlabel(labels[col])
-    # Left
-    for row in range(ndim):
+    # Left labels
+    for row in range(1,ndim):
         if labels is not None:
             axes[row, 0].set_ylabel(labels[row])
-    # Remove space between subplots
+
+    # Ticks
+    for i in range(ndim):
+        ax = axes[-1,i]
+        locator = ticker.MaxNLocator(n_ticks)
+        formatter = ticker.FormatStrFormatter(rf'$%{fmt}$')
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(formatter)
+        [l.set_rotation(45) for l in ax.get_xticklabels()]
+        [l.set_horizontalalignment('right') for l in ax.get_xticklabels()]
+        #[l.set_fontsize('x-small') for l in ax.get_xticklabels()]
+    for i in range(1,ndim):
+        ax = axes[i,0]
+        locator = ticker.MaxNLocator(n_ticks)
+        formatter = ticker.FormatStrFormatter(rf'$%{fmt}$')
+        ax.yaxis.set_major_locator(locator)
+        ax.yaxis.set_major_formatter(formatter)
+        #[l.set_fontsize('x-small') for l in ax.get_yticklabels()]
+
+    # Adjust plot
+    fig.tight_layout()
     fig.subplots_adjust(wspace=0, hspace=0)
     return fig
 
