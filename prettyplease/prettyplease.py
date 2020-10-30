@@ -12,9 +12,13 @@ def contour_levels(grid, percentiles=[0.68, 0.95, 0.997]):
     cutoffs = np.searchsorted(pct, np.array(percentiles) ** 2)
     return np.sort(sorted_[cutoffs])
 
-def corner(data, bins=50, percentiles=[0.68, 0.95, 0.997], labels=None, title=None, show_estimates=True, n_ticks=4, fmt='.3f', grayscale=False, figsize=(10,10)):
+def corner(data, bins=50, percentiles=[0.68, 0.95, 0.997], labels=None, colors='blue', title=None, show_estimates=True, n_ticks=4, fmt='.3f', figsize=(10,10)):
     """Create a pretty corner plot."""
-    colors = ['white', 'gray', 'black'] if grayscale else ['white', 'blue','purple']
+    # Color scheme. If colors is a string then the color scheme is white and the specified color.
+    # If colors is a list the user has completely specified the color scheme they want.
+    if type(colors) is str:
+        colors = ['white', colors]
+
     density_cmap = LinearSegmentedColormap.from_list("density_cmap", colors=colors)
     ndim = data.shape[1]
 
