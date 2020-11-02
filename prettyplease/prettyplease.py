@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
 
-def contour_levels(grid, percentiles=[0.68, 0.95, 0.997]):
+def contour_levels(grid, quantiles=[0.68, 0.95, 0.997]):
     """Compute contour levels for a gridded 2D posterior"""
     sorted_ = np.flipud(np.sort(grid.ravel()))
     pct = np.cumsum(sorted_) / np.sum(sorted_)
-    cutoffs = np.searchsorted(pct, np.array(percentiles) ** 2)
+    cutoffs = np.searchsorted(pct, np.array(quantiles) ** 2)
     return np.sort(sorted_[cutoffs])
 
 def corner(data, bins=50, quantiles=[0.68, 0.95, 0.997], labels=None, colors='blue', title=None, show_estimates=True, n_ticks=4, fmt='.3f', figsize=(10,10)):
@@ -55,7 +55,7 @@ def corner(data, bins=50, quantiles=[0.68, 0.95, 0.997], labels=None, colors='bl
             extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
             vmin = (np.max(hist)-np.min(hist)) / 50 + np.min(hist) # Make low levels white
             ax.contourf(hist, extent=extent, cmap=density_cmap, levels=30, vmin=vmin)
-            contourlevels = contour_levels(hist, percentiles)
+            contourlevels = contour_levels(hist, quantiles)
             ax.contour(hist, extent=extent, colors='gray', linewidths=0.8, levels=contourlevels, alpha=1.0)
 
     # Bottom labels
