@@ -12,7 +12,7 @@ def contour_levels(grid, percentiles=[0.68, 0.95, 0.997]):
     cutoffs = np.searchsorted(pct, np.array(percentiles) ** 2)
     return np.sort(sorted_[cutoffs])
 
-def corner(data, bins=50, percentiles=[0.68, 0.95, 0.997], labels=None, colors='blue', title=None, show_estimates=True, n_ticks=4, fmt='.3f', figsize=(10,10)):
+def corner(data, bins=50, quantiles=[0.68, 0.95, 0.997], labels=None, colors='blue', title=None, show_estimates=True, n_ticks=4, fmt='.3f', figsize=(10,10)):
     """Create a pretty corner plot."""
     # Color scheme. If colors is a string then the color scheme is white and the specified color.
     # If colors is a list the user has completely specified the color scheme they want.
