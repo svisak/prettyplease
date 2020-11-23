@@ -33,14 +33,15 @@ def corner(data, bins=50, quantiles=[0.68, 0.95, 0.997], labels=None, colors='bl
     for i in range(ndim):
         x = data[:, i].flatten()
         ax = axes[i, i]
-        ax.hist(x, bins=bins, color='black', histtype='step', linewidth=0.5)
+        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=0.5)
         ax.set_xticks([])
         ax.set_yticks([])
         if show_estimates:
             median = np.percentile(x, 50)
             low = np.percentile(x, 16) - median
             high = np.percentile(x, 84) - median
-            ax.set_title(rf'${median:{fmt}}_{{{low:{fmt}}}}^{{+{high:{fmt}}}}$')
+            label = f'{labels[i]}\n' if labels is not None else ''
+            ax.set_title(f'{label}' rf'${median:{fmt}}_{{{low:{fmt}}}}^{{+{high:{fmt}}}}$')
     # Lower triangle
     for col in range(ndim):
         for row in range(col+1, ndim):
