@@ -87,7 +87,6 @@ def corner(data, bins=50, quantiles=[0.68, 0.95, 0.997], labels=None, colors='bl
         #[l.set_fontsize('x-small') for l in ax.get_yticklabels()]
 
     # Adjust plot
-    fig.tight_layout()
     fig.subplots_adjust(wspace=0, hspace=0)
     return fig
 
