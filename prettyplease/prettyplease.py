@@ -38,7 +38,7 @@ def corner(data, bins=50, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     assert(len(quantiles) == 2)
 
     # Pop keyword arguments
-    lw = kwargs.pop('linewidth', 0.6)
+    n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 2)
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
@@ -58,7 +58,7 @@ def corner(data, bins=50, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     ndim = data.shape[1]
 
     # Determine suitable number of digits to show
-    decimals = [determine_num_decimals(column) for column in data.T]
+    decimals = [determine_num_decimals(column, n_uncertainty_digits) for column in data.T]
 
     if figsize is None:
         # TODO This autoscaling is very crude
