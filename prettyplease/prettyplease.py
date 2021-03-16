@@ -13,10 +13,65 @@ def contour_levels(grid, levels=[0.68, 0.95]):
     cutoffs = np.searchsorted(pct, np.array(levels))
     return np.sort(sorted_[cutoffs])
 
-def corner(data, bins=50, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs):
-    """Create a pretty corner plot."""
+def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs):
+    """
+    Create a pretty corner plot.
 
-    def determine_num_decimals(x, n_uncertainty_digits=2):
+    :param bins:
+        The number of bins to use in both the 1D and 2D histograms.
+        Default: 30
+
+    :param levels:
+        The levels of the 2D contours showed in the lower triangle.
+        Default: [0.68, 0.95]
+
+    :param quantiles:
+        The quantiles used to compute uncertainty in the 1D marginalizations.
+        Must be of length 2.
+        Default: [0.16, 0.84].
+
+    :param n_uncertainty_digits:
+        Determines to how many significant digits the uncertainty is computed.
+        This directly affects how estimates and ticks are displayed.
+        Default: 2
+
+    :param labels:
+        List of parameter labels. Should be the same length as data.shape[1]
+        Default: None
+
+    :param show_estimates:
+        Whether to display parameter estimates above the diagonal.
+        Uses the median as the central value and uncertainty based
+        on the quantiles argument.
+        Default: True
+
+    :param plot_estimates:
+        Whether to add vertical lines at the quantiles in the 1D plots.
+        Default: False
+
+    :param colors:
+        Color scheme to use. May be either a single color string
+        or a list of colors.
+        Default: ['white', 'black']
+
+    :param n_ticks:
+        (Maximum) number of ticks to show on each axis.
+        Default: 4
+
+    :param figsize:
+        The figsize. Either a tuple or None.
+        Default: None.
+
+    :param fontsize:
+        Fontsize to use. Affects all text.
+        Default: 10
+
+    :param linewidth:
+        Linewidth to use in plots.
+        Default: 0.6
+    """
+
+    def determine_num_decimals(x, n_uncertainty_digits):
         n_extra_digits = n_uncertainty_digits - 1
         median = np.percentile(x, 50)
         low = np.percentile(x, 16) - median
