@@ -42,10 +42,11 @@ def corner(data, bins=50, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
-    colors = kwargs.pop('colors', 'blue')
+    colors = kwargs.pop('colors', ['white', 'black'])
     n_ticks = kwargs.pop('n_ticks', 4)
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
+    lw = kwargs.pop('linewidth', 0.6)
 
     # Color scheme. If colors is a string then the color scheme is
     # "white plus the specified color".
