@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
 
+def compute_sigma_levels(sigmas):
+    return 1.0 - np.exp(-0.5 * np.array(sigmas) ** 2)
+
 def contour_levels(grid, levels=[0.68, 0.95]):
     """Compute contour levels for a gridded 2D posterior"""
     sorted_ = np.flipud(np.sort(grid.ravel()))
@@ -13,7 +16,7 @@ def contour_levels(grid, levels=[0.68, 0.95]):
     cutoffs = np.searchsorted(pct, np.array(levels))
     return np.sort(sorted_[cutoffs])
 
-def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs):
+def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     """
     Create a pretty corner plot.
 
@@ -122,6 +125,7 @@ def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     assert(len(quantiles) == 2)
 
     # Pop keyword arguments
+    levels = kwargs.pop('levels', None)
     n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 2)
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
@@ -132,6 +136,10 @@ def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
     lw = kwargs.pop('linewidth', 0.6)
+
+    # Default levels
+    if levels is None:
+        levels = compute_sigma_levels([1.0, 2.0])
 
     # Color scheme. If colors is a string then the color scheme is
     # "white plus the specified color".
