@@ -89,6 +89,35 @@ def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
         label = label + '\n' if label is not None else ''
         return label + rf'${mid}_{{{low}}}^{{{high}}}$'
 
+    def grow_x(ax):
+        ticks = ax.get_xticks()
+        lim = ax.get_xlim()
+        low, high, changed = new_limits(ticks, lim, 7)
+        if changed:
+            ax.set_xlim(low, high)
+
+    def grow_y(axes, row):
+        ax = axes[row, 0]
+        ticks = ax.get_yticks()
+        lim = ax.get_ylim()
+        low, high, changed = new_limits(ticks, lim, 8)
+        if changed:
+            for ax in axes[row, :row]:
+                ax.set_ylim(low, high)
+
+    def new_limits(ticks, limits, tick_free_zone_factor):
+        low = limits[0]
+        high = limits[1]
+        r = high - low
+        red_zone = r / tick_free_zone_factor
+        ticks = [t for t in ticks if t >= low and t <= high]
+        changed = False
+        if ticks[0] < low + red_zone or ticks[-1] > high - red_zone:
+            low = low - red_zone
+            high = high + red_zone
+            changed = True
+        return (low, high, changed)
+
     # The length of quantiles must be 2
     assert(len(quantiles) == 2)
 
@@ -99,6 +128,7 @@ def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
     colors = kwargs.pop('colors', ['white', 'black'])
     n_ticks = kwargs.pop('n_ticks', 4)
+    xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
     lw = kwargs.pop('linewidth', 0.6)
@@ -116,11 +146,20 @@ def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     # Determine suitable number of digits to show
     decimals = [determine_num_decimals(column, n_uncertainty_digits) for column in data.T]
 
+    # n_ticks can be either an int or a list
+    if type(n_ticks) is int:
+        n_ticks = [n_ticks] * ndim
+    assert(len(n_ticks) == ndim)
+
     if figsize is None:
         # TODO This autoscaling is very crude
         tmp = 5 + ndim
         figsize = (tmp, tmp)
-    fig, axes = plt.subplots(nrows=ndim, ncols=ndim, squeeze=False, figsize=figsize)
+    tmp = {}
+    tmp['squeeze'] = False
+    tmp['sharex'] = 'col' # We cannot sharey because of the ylim on the diagonal
+    tmp['figsize'] = figsize
+    fig, axes = plt.subplots(nrows=ndim, ncols=ndim, **tmp)
 
     # Upper triangle
     for col in range(ndim):
@@ -174,17 +213,19 @@ def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
     formatters = [ticker.FormatStrFormatter(rf'$%.{dec}f$') for dec in decimals]
     for i in range(ndim):
         ax = axes[-1,i]
-        locator = ticker.MaxNLocator(n_ticks)
+        locator = ticker.MaxNLocator(n_ticks[i])
         ax.xaxis.set_major_locator(locator)
         ax.xaxis.set_major_formatter(formatters[i])
-        [l.set_rotation(45) for l in ax.get_xticklabels()]
-        [l.set_horizontalalignment('right') for l in ax.get_xticklabels()]
+        grow_x(ax)
         [l.set_fontsize(fontsize) for l in ax.get_xticklabels()]
+        [l.set_rotation(xticklabel_rotation) for l in ax.get_xticklabels()]
+        [l.set_horizontalalignment('right') for l in ax.get_xticklabels()]
     for i in range(1,ndim):
         ax = axes[i,0]
-        locator = ticker.MaxNLocator(n_ticks)
+        locator = ticker.MaxNLocator(n_ticks[i])
         ax.yaxis.set_major_locator(locator)
         ax.yaxis.set_major_formatter(formatters[i])
+        grow_y(axes, i)
         [l.set_fontsize(fontsize) for l in ax.get_yticklabels()]
 
     # Adjust plot
