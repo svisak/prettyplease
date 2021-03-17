@@ -55,7 +55,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     :param colors:
         Color scheme to use. May be either a single color string
         or a list of colors.
-        Default: ['white', 'black']
+        Default: ['whitesmoke', 'black']
 
     :param n_ticks:
         (Maximum) number of ticks to show on each axis.
@@ -130,7 +130,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
-    colors = kwargs.pop('colors', ['white', 'black'])
+    colors = kwargs.pop('colors', ['whitesmoke', 'black'])
     n_ticks = kwargs.pop('n_ticks', 4)
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
@@ -146,7 +146,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     # If colors is a list the user has completely
     # specified the color scheme they want.
     if type(colors) is str:
-        colors = ['white', colors]
+        colors = ['whitesmoke', colors]
 
     density_cmap = LinearSegmentedColormap.from_list("density_cmap", colors=colors)
     ndim = data.shape[1]
