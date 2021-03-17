@@ -171,21 +171,20 @@ def corner(data, bins=30, levels=[0.68, 0.95], quantiles=[0.16, 0.84], **kwargs)
             axes[row, 0].set_ylabel(labels[row], fontsize=fontsize)
 
     # Ticks
+    formatters = [ticker.FormatStrFormatter(rf'$%.{dec}f$') for dec in decimals]
     for i in range(ndim):
         ax = axes[-1,i]
         locator = ticker.MaxNLocator(n_ticks)
-        formatter = ticker.FormatStrFormatter(rf'$%.{decimals[i]}f$')
         ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(formatter)
+        ax.xaxis.set_major_formatter(formatters[i])
         [l.set_rotation(45) for l in ax.get_xticklabels()]
         [l.set_horizontalalignment('right') for l in ax.get_xticklabels()]
         [l.set_fontsize(fontsize) for l in ax.get_xticklabels()]
     for i in range(1,ndim):
         ax = axes[i,0]
         locator = ticker.MaxNLocator(n_ticks)
-        formatter = ticker.FormatStrFormatter(rf'$%.{decimals[i]}f$')
         ax.yaxis.set_major_locator(locator)
-        ax.yaxis.set_major_formatter(formatter)
+        ax.yaxis.set_major_formatter(formatters[i])
         [l.set_fontsize(fontsize) for l in ax.get_yticklabels()]
 
     # Adjust plot
