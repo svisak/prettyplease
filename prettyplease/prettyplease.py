@@ -203,8 +203,11 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins)
             hist = hist.T
             extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-            vmin = (np.max(hist)-np.min(hist)) / 50 + np.min(hist) # Make low levels white
-            ax.contourf(hist, extent=extent, cmap=density_cmap, levels=30, vmin=vmin, extend='max')
+            n_contourf_levels = 30
+            locator = ticker.MaxNLocator(n_contourf_levels, min_n_ticks=1)
+            lev = locator.tick_values(np.min(hist), np.max(hist))
+            lev[0] = lev[0] if lev[0] > 0 else 1
+            ax.contourf(hist, extent=extent, cmap=density_cmap, levels=lev, extend='max')
             tmp = contour_levels(hist, levels)
             ax.contour(hist, extent=extent, colors=colors[-1], linewidths=lw, levels=tmp, alpha=0.5)
 
