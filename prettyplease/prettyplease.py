@@ -135,7 +135,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
-    lw = kwargs.pop('linewidth', 0.6)
+    lw = kwargs.pop('linewidth', 0.7)
 
     # Default levels
     if levels is None:
@@ -188,7 +188,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             high = tmp[1]
             label = labels[i] if labels is not None else ''
             title = diagonal_title(label, median, low, high, n_dec)
-            ax.set_title(title, fontsize=fontsize)
+            ax.set_title(title, fontsize=fontsize, loc='center')
         if plot_estimates:
             c = colors[-1]
             [ax.axvline(np.quantile(x, q), ls='-.', color=c, lw=lw) for q in quantiles]
@@ -209,7 +209,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             lev[0] = lev[0] if lev[0] > 0 else 1
             ax.contourf(hist, extent=extent, cmap=density_cmap, levels=lev, extend='max')
             tmp = contour_levels(hist, levels)
-            ax.contour(hist, extent=extent, colors=colors[-1], linewidths=lw, levels=tmp, alpha=0.5)
+            ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
 
     # Bottom labels
     for col in range(ndim):
