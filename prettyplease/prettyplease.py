@@ -9,7 +9,7 @@ from matplotlib.colors import LinearSegmentedColormap
 def compute_sigma_levels(sigmas):
     return 1.0 - np.exp(-0.5 * np.array(sigmas) ** 2)
 
-def contour_levels(grid, levels=[0.68, 0.95]):
+def contour_levels(grid, levels=compute_sigma_levels([1.0, 2.0])):
     """Compute contour levels for a gridded 2D posterior"""
     sorted_ = np.flipud(np.sort(grid.ravel()))
     pct = np.cumsum(sorted_) / np.sum(sorted_)
