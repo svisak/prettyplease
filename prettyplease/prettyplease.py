@@ -177,7 +177,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     for i in range(ndim):
         x = data[:, i].flatten()
         ax = axes[i, i]
-        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw)
+        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True)
         ax.set_xticks([])
         ax.set_yticks([])
         if show_estimates:
