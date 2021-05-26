@@ -16,7 +16,7 @@ def contour_levels(grid, levels=compute_sigma_levels([1.0, 2.0])):
     cutoffs = np.searchsorted(pct, np.array(levels))
     return np.sort(sorted_[cutoffs])
 
-def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
+def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     """
     Create a pretty corner plot.
 
@@ -177,7 +177,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     for i in range(ndim):
         x = data[:, i].flatten()
         ax = axes[i, i]
-        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True)
+        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True, weights=weights)
         ax.set_xticks([])
         ax.set_yticks([])
         if show_estimates:
@@ -200,7 +200,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             ax.set_yticks([])
             x1 = data[:, col]
             x2 = data[:, row]
-            hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins)
+            hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights)
             hist = hist.T
             extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
             n_contourf_levels = 30
