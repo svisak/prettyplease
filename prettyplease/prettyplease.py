@@ -33,6 +33,12 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Must be of length 2.
         Default: [0.16, 0.84].
 
+    :param weights:
+        Array of weights for each sample. Passed to the histogramming functions
+        in numpy. Should have shape (len(data),).
+        If None, all samples have equal weight.
+        Default: None
+
     :param n_uncertainty_digits:
         Determines to how many significant digits the uncertainty is computed.
         This directly affects how estimates and ticks are displayed.
