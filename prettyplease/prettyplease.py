@@ -32,7 +32,7 @@ def contour_levels(grid, levels=compute_sigma_levels([1.0, 2.0])):
     cutoffs = np.searchsorted(pct, np.array(levels))
     return np.sort(sorted_[cutoffs])
 
-def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
+def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     """
     Create a pretty corner plot.
 
@@ -53,6 +53,12 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
         The type of plot to show in the lower triangle.
         Values: 'hist', 'scatter'
         Default: 'hist'
+
+    :param weights:
+        Array of weights for each sample. Passed to the histogramming functions
+        in numpy. Should have shape (len(data),).
+        If None, all samples have equal weight.
+        Default: None
 
     :param n_uncertainty_digits:
         Determines to how many significant digits the uncertainty is computed.
@@ -142,8 +148,8 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             changed = True
         return (low, high, changed)
 
-    def plot_joint_distribution(ax, x1, x2, bins, cmap, levels):
-        hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins)
+    def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights):
+        hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights)
         hist = hist.T
         extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
         n_contourf_levels = 30
@@ -154,8 +160,10 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
         tmp = contour_levels(hist, levels)
         ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
 
-    def plot_joint_scatter(ax, x1, x2, color):
+    def plot_joint_scatter(ax, x1, x2, color, weights):
         ax.plot(x1, x2, color=color, marker='.', ls='', alpha=0.2)
+        if weights is not None:
+            warnings.warn('The specified weights will be disregarded for scatter plots!')
 
     # Nicer warning messages
     def format_warning(message, category, filename, lineno, file=None, line=None):
@@ -220,7 +228,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
     for i in range(ndim):
         x = data[:, i].flatten()
         ax = axes[i, i]
-        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True)
+        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True, weights=weights)
         ax.set_xticks([])
         ax.set_yticks([])
         if show_estimates:
@@ -248,13 +256,13 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
                 # 2D histogramming can fail if the sample size is too small,
                 # use scatter plot as backup.
                 try:
-                    plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels)
+                    plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels, weights)
                 except ValueError:
                     num_hist_failed += 1
-                    plot_joint_scatter(ax, x1, x2, colors[-1])
+                    plot_joint_scatter(ax, x1, x2, colors[-1], weights)
             elif plot_type_2d == 'scatter':
                 # The user wants 2D scatter plots.
-                plot_joint_scatter(ax, x1, x2, colors[-1])
+                plot_joint_scatter(ax, x1, x2, colors[-1], weights)
             else:
                 raise ValueError(f'Unrecognized 2D plot type {plot_type_2d}.')
     if num_hist_failed > 0:
