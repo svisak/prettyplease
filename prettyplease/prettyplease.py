@@ -20,6 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
+import warnings
 
 def compute_sigma_levels(sigmas):
     return 1.0 - np.exp(-0.5 * np.array(sigmas) ** 2)
@@ -47,6 +48,11 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
         The quantiles used to compute uncertainty in the 1D marginalizations.
         Must be of length 2.
         Default: [0.16, 0.84].
+
+    :param plot_type_2d:
+        The type of plot to show in the lower triangle.
+        Values: 'hist', 'scatter'
+        Default: 'hist'
 
     :param n_uncertainty_digits:
         Determines to how many significant digits the uncertainty is computed.
@@ -136,11 +142,33 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             changed = True
         return (low, high, changed)
 
+    def plot_joint_distribution(ax, x1, x2, bins, cmap, levels):
+        hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins)
+        hist = hist.T
+        extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+        n_contourf_levels = 30
+        locator = ticker.MaxNLocator(n_contourf_levels, min_n_ticks=1)
+        lev = locator.tick_values(np.min(hist), np.max(hist))
+        lev[0] = lev[0] if lev[0] > 0 else 1
+        ax.contourf(hist, extent=extent, cmap=cmap, levels=lev, extend='max')
+        tmp = contour_levels(hist, levels)
+        ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
+
+    def plot_joint_scatter(ax, x1, x2, color):
+        ax.plot(x1, x2, color=color, marker='.', ls='', alpha=0.2)
+
+    # Nicer warning messages
+    def format_warning(message, category, filename, lineno, file=None, line=None):
+        return f'{filename}:{lineno}: {category.__name__}: {message}\n'
+    warnings.formatwarning = format_warning
+
+
     # The length of quantiles must be 2
     assert(len(quantiles) == 2)
 
     # Pop keyword arguments
     levels = kwargs.pop('levels', None)
+    plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
     n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 2)
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
@@ -208,6 +236,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             c = colors[-1]
             [ax.axvline(np.quantile(x, q), ls='-.', color=c, lw=lw) for q in quantiles]
     # Lower triangle
+    num_hist_failed = 0
     for col in range(ndim):
         for row in range(col+1, ndim):
             ax = axes[row, col]
@@ -215,16 +244,21 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], **kwargs):
             ax.set_yticks([])
             x1 = data[:, col]
             x2 = data[:, row]
-            hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins)
-            hist = hist.T
-            extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-            n_contourf_levels = 30
-            locator = ticker.MaxNLocator(n_contourf_levels, min_n_ticks=1)
-            lev = locator.tick_values(np.min(hist), np.max(hist))
-            lev[0] = lev[0] if lev[0] > 0 else 1
-            ax.contourf(hist, extent=extent, cmap=density_cmap, levels=lev, extend='max')
-            tmp = contour_levels(hist, levels)
-            ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
+            if plot_type_2d == 'hist':
+                # 2D histogramming can fail if the sample size is too small,
+                # use scatter plot as backup.
+                try:
+                    plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels)
+                except ValueError:
+                    num_hist_failed += 1
+                    plot_joint_scatter(ax, x1, x2, colors[-1])
+            elif plot_type_2d == 'scatter':
+                # The user wants 2D scatter plots.
+                plot_joint_scatter(ax, x1, x2, colors[-1])
+            else:
+                raise ValueError(f'Unrecognized 2D plot type {plot_type_2d}.')
+    if num_hist_failed > 0:
+        warnings.warn(f'{num_hist_failed} 2D histograms failed, replacing these with scatter plots. Increase sample size or decrease number of bins.')
 
     # Bottom labels
     for col in range(ndim):
