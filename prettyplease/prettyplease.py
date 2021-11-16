@@ -158,7 +158,10 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         lev[0] = lev[0] if lev[0] > 0 else 1
         ax.contourf(hist, extent=extent, cmap=cmap, levels=lev, extend='max')
         tmp = contour_levels(hist, levels)
-        ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
+        try:
+            ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
+        except ValueError:
+            warnings.warn('Could not compute increasing contour levels')
 
     def plot_joint_scatter(ax, x1, x2, color, weights):
         ax.plot(x1, x2, color=color, marker='.', ls='', alpha=0.2)
@@ -244,7 +247,6 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             c = colors[-1]
             [ax.axvline(np.quantile(x, q), ls='-.', color=c, lw=lw) for q in quantiles]
     # Lower triangle
-    num_hist_failed = 0
     for col in range(ndim):
         for row in range(col+1, ndim):
             ax = axes[row, col]
@@ -253,20 +255,13 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             x1 = data[:, col]
             x2 = data[:, row]
             if plot_type_2d == 'hist':
-                # 2D histogramming can fail if the sample size is too small,
-                # use scatter plot as backup.
-                try:
-                    plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels, weights)
-                except ValueError:
-                    num_hist_failed += 1
-                    plot_joint_scatter(ax, x1, x2, colors[-1], weights)
+                # The user wants 2D histograms
+                plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels, weights)
             elif plot_type_2d == 'scatter':
                 # The user wants 2D scatter plots.
                 plot_joint_scatter(ax, x1, x2, colors[-1], weights)
             else:
                 raise ValueError(f'Unrecognized 2D plot type {plot_type_2d}.')
-    if num_hist_failed > 0:
-        warnings.warn(f'{num_hist_failed} 2D histograms failed, replacing these with scatter plots. Increase sample size or decrease number of bins.')
 
     # Bottom labels
     for col in range(ndim):
