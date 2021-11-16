@@ -42,7 +42,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
 
     :param levels:
         The levels of the 2D contours showed in the lower triangle.
-        Default: [0.68, 0.95]
+        Default: [0.393, 0.865]
 
     :param quantiles:
         The quantiles used to compute uncertainty in the 1D marginalizations.
