@@ -158,10 +158,11 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         lev[0] = lev[0] if lev[0] > 0 else 1
         ax.contourf(hist, extent=extent, cmap=cmap, levels=lev, extend='max')
         tmp = contour_levels(hist, levels)
-        try:
-            ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
-        except ValueError:
-            warnings.warn('Could not compute increasing contour levels')
+        if levels is not None:
+            try:
+                ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
+            except ValueError:
+                warnings.warn('Could not compute increasing contour levels, omitting contours')
 
     def plot_joint_scatter(ax, x1, x2, color, weights):
         ax.plot(x1, x2, color=color, marker='.', ls='', alpha=0.2)
@@ -178,7 +179,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     assert(len(quantiles) == 2)
 
     # Pop keyword arguments
-    levels = kwargs.pop('levels', None)
+    levels = kwargs.pop('levels', compute_sigma_levels([1.0, 2.0]))
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
     n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 2)
     labels = kwargs.pop('labels', None)
@@ -190,10 +191,6 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
     lw = kwargs.pop('linewidth', 0.7)
-
-    # Default levels
-    if levels is None:
-        levels = compute_sigma_levels([1.0, 2.0])
 
     # Color scheme. If colors is a string then the color scheme is
     # "white plus the specified color".
