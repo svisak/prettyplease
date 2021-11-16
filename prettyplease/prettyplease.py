@@ -314,12 +314,13 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             axes[row, 0].set_ylabel(labels[row], fontsize=fontsize)
 
     # Ticks
-    formatters = [ticker.FormatStrFormatter(rf'$%.{dec}f$') for dec in decimals]
+    formatters = [ticker.FormatStrFormatter(rf'$%.{max(dec-1,1)}f$') for dec in decimals]
     for i in range(ndim):
         ax = axes[-1,i]
         locator = ticker.MaxNLocator(n_ticks[i])
         ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(formatters[i])
+        if decimals[i] >= 5:
+            ax.xaxis.set_major_formatter(formatters[i])
         grow_x(ax)
         [l.set_fontsize(fontsize) for l in ax.get_xticklabels()]
         [l.set_rotation(xticklabel_rotation) for l in ax.get_xticklabels()]
@@ -328,7 +329,8 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ax = axes[i,0]
         locator = ticker.MaxNLocator(n_ticks[i])
         ax.yaxis.set_major_locator(locator)
-        ax.yaxis.set_major_formatter(formatters[i])
+        if decimals[i] >= 5:
+            ax.yaxis.set_major_formatter(formatters[i])
         grow_y(axes, i)
         [l.set_fontsize(fontsize) for l in ax.get_yticklabels()]
 
