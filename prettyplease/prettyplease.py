@@ -16,6 +16,40 @@ def contour_levels(grid, levels=compute_sigma_levels([1.0, 2.0])):
     cutoffs = np.searchsorted(pct, np.array(levels))
     return np.sort(sorted_[cutoffs])
 
+def weighted_quantiles(values, quantiles, weights=None,
+                      values_sorted=False, old_style=False):
+    """
+    Very close to numpy.percentile, but supports weights.
+    :param values: numpy.array with data
+    :param weights: array-like of the same length as `values'
+    :param values_sorted: bool, if True, then will avoid sorting of
+        initial array
+    :param old_style: if True, will correct output to be consistent
+        with numpy.percentile.
+    :return: numpy.array with computed quantiles.
+    """
+    values = np.array(values)
+    quantiles = np.array(quantiles)
+    if weights is None:
+        weights = np.ones(len(values))
+    weights = np.array(weights)
+    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
+        'quantiles should be in [0, 1]'
+
+    if not values_sorted:
+        sorter = np.argsort(values)
+        values = values[sorter]
+        weights = weights[sorter]
+
+    weighted_quantiles = np.cumsum(weights) - 0.5 * weights
+    if old_style:
+        # To be convenient with numpy.percentile
+        weighted_quantiles -= weighted_quantiles[0]
+        weighted_quantiles /= weighted_quantiles[-1]
+    else:
+        weighted_quantiles /= np.sum(weights)
+    return np.interp(quantiles, weighted_quantiles, values)
+
 def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     """
     Create a pretty corner plot.
@@ -188,10 +222,19 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ax.set_yticks([])
         if show_estimates:
             n_dec = decimals[i]
-            median = np.percentile(x, 50)
-            tmp = [np.quantile(x, q)-median for q in quantiles]
-            low = tmp[0]
-            high = tmp[1]
+            median = None
+            low = None
+            high = None
+            if weights is None:
+                median = np.median(x)
+                tmp = [np.quantile(x, q)-median for q in quantiles]
+                low = tmp[0]
+                high = tmp[1]
+            else:
+                median = weighted_quantiles(x, [0.5], weights=weights)[0]
+                tmp = weighted_quantiles(x, quantiles, weights=weights)
+                low = tmp[0] - median
+                high = tmp[1] - median
             label = labels[i] if labels is not None else ''
             title = diagonal_title(label, median, low, high, n_dec)
             ax.set_title(title, fontsize=fontsize, loc='center')
