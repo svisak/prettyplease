@@ -32,7 +32,7 @@ def contour_levels(grid, levels=compute_sigma_levels([1.0, 2.0])):
     cutoffs = np.searchsorted(pct, np.array(levels))
     return np.sort(sorted_[cutoffs])
 
-def weighted_quantiles(values, quantiles, weights=None,
+def weighted_quantile(values, quantiles, weights=None,
                       values_sorted=False, old_style=False):
     """
     Very close to numpy.percentile, but supports weights.
@@ -47,7 +47,7 @@ def weighted_quantiles(values, quantiles, weights=None,
     values = np.array(values)
     quantiles = np.array(quantiles)
     if weights is None:
-        weights = np.ones(len(values))
+        return np.quantile(values, quantiles)
     weights = np.array(weights)
     assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
         'quantiles should be in [0, 1]'
@@ -135,15 +135,20 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Default: 0.6
     """
 
-    def determine_num_decimals(x, n_uncertainty_digits):
+    def determine_num_decimals(x, n_uncertainty_digits, weights):
         n_extra_digits = n_uncertainty_digits - 1
-        median = np.percentile(x, 50)
-        low = np.percentile(x, 16) - median
-        high = np.percentile(x, 84) - median
+        low, median, high = low_median_high(x, [0.16, 0.84], weights)
         decimals_low = -decimal.Decimal(low).adjusted() + n_extra_digits
         decimals_high = -decimal.Decimal(high).adjusted() + n_extra_digits
         decimals = max(decimals_low, decimals_high)
         return max(0, decimals)
+
+    def low_median_high(x, quantiles, weights):
+        median = weighted_quantile(x, [0.5], weights=weights)[0]
+        tmp = weighted_quantile(x, quantiles, weights=weights)
+        low = tmp[0] - median
+        high = tmp[1] - median
+        return (low, median, high)
 
     def diagonal_title(label, mid, low, high, n_dec):
         fmt = f'.{n_dec}f'
@@ -237,7 +242,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     ndim = data.shape[1]
 
     # Determine suitable number of digits to show
-    decimals = [determine_num_decimals(column, n_uncertainty_digits) for column in data.T]
+    decimals = [determine_num_decimals(column, n_uncertainty_digits, weights) for column in data.T]
 
     # n_ticks can be either an int or a list
     if type(n_ticks) is int:
@@ -267,25 +272,13 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ax.set_yticks([])
         if show_estimates:
             n_dec = decimals[i]
-            median = None
-            low = None
-            high = None
-            if weights is None:
-                median = np.median(x)
-                tmp = [np.quantile(x, q)-median for q in quantiles]
-                low = tmp[0]
-                high = tmp[1]
-            else:
-                median = weighted_quantiles(x, [0.5], weights=weights)[0]
-                tmp = weighted_quantiles(x, quantiles, weights=weights)
-                low = tmp[0] - median
-                high = tmp[1] - median
+            low, median, high = low_median_high(x, quantiles, weights)
             label = labels[i] if labels is not None else ''
             title = diagonal_title(label, median, low, high, n_dec)
             ax.set_title(title, fontsize=fontsize, loc='center')
         if plot_estimates:
             c = colors[-1]
-            [ax.axvline(np.quantile(x, q), ls='-.', color=c, lw=lw) for q in quantiles]
+            [ax.axvline(weighted_quantile(x, [q], weights), ls='-.', color=c, lw=lw) for q in quantiles]
     # Lower triangle
     for col in range(ndim):
         for row in range(col+1, ndim):
