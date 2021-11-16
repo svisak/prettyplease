@@ -187,15 +187,23 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             changed = True
         return (low, high, changed)
 
-    def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights):
+    def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, n_contourf_levels=30):
         hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights)
         hist = hist.T
         extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-        n_contourf_levels = 30
         locator = ticker.MaxNLocator(n_contourf_levels, min_n_ticks=1)
         lev = locator.tick_values(np.min(hist), np.max(hist))
         lev[0] = lev[0] if lev[0] > 0 else 1
-        ax.contourf(hist, extent=extent, cmap=cmap, levels=lev, extend='max')
+        try:
+            ax.contourf(hist, extent=extent, cmap=cmap, levels=lev, extend='max')
+        except ValueError:
+            # ax.contourf failed
+            #warnings.warn(f'contourf failed, decreasing n_contourf_levels to {n_contourf_levels}')
+            n_contourf_levels -= 1
+            if n_contourf_levels <= 5:
+                warnings.warn('Could not compute contourf levels, falling back to scatter plot')
+                plot_joint_scatter(ax, x1, x2, 'gray', weights)
+            plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, n_contourf_levels=n_contourf_levels)
         tmp = contour_levels(hist, levels)
         if levels is not None:
             try:
