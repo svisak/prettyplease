@@ -350,4 +350,5 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
 
     # Adjust plot
     fig.subplots_adjust(wspace=0, hspace=0)
+    fig.align_labels()
     return fig
