@@ -151,8 +151,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         low, median, high = low_median_high(x, [0.16, 0.84], weights)
         decimals_low = -int(np.floor(np.log10(np.abs(low)))) + n_extra_digits
         decimals_high = -int(np.floor(np.log10(np.abs(high)))) + n_extra_digits
-        decimals = max(decimals_low, decimals_high)
-        return max(0, decimals)
+        return max(decimals_low, decimals_high)
 
     def low_median_high(x, quantiles, weights):
         median = weighted_quantile(x, [0.5], weights=weights)[0]
@@ -161,13 +160,38 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         high = tmp[1] - median
         return (low, median, high)
 
-    def diagonal_title(label, mid, low, high, n_dec):
-        fmt = f'.{n_dec}f'
+    def float_to_leading_integers(val, n_dig):
+        '''
+        Discards any decimal points and leading zeros
+        and returns an integer with n_dig digits.
+        '''
+        exp = decimal.Decimal(val).adjusted()
+        leading = np.abs(val/10**(exp-(n_dig-1)))
+        return decimal.Decimal(leading).to_integral_value()
+
+    def diagonal_title(label, error_style, mid, low, high, n_dec, n_uncertainty_digits):
+        fmt = f'.{max(n_dec,0)}f'
+        mid = np.around(mid, n_dec)
         mid = f'{mid:{fmt}}'
-        low = f'{low:{fmt}}'
-        high = f'+{high:{fmt}}'
-        label = label + '\n' if label is not None else ''
-        return label + rf'${mid}_{{{low}}}^{{{high}}}$'
+        label = label + '\n' + rf'${mid}$' if label is not None else ''
+        if error_style == 'parenthesis':
+            low = float_to_leading_integers(low, n_uncertainty_digits)
+            high = float_to_leading_integers(high, n_uncertainty_digits)
+            if n_dec < 0:
+                low *= 10**(-n_dec)
+                high *= 10**(-n_dec)
+            label += rf'$(_{{{low}}}^{{{high}}})$'
+        elif error_style == 'plusminus':
+            low = np.around(low, n_dec)
+            low = f'{low:{fmt}}'
+            high = np.around(high, n_dec)
+            high = f'+{high:{fmt}}'
+            label += rf'$_{{{low}}}^{{{high}}}$'
+        elif error_style is None:
+            pass
+        else:
+            warnings.warn(f"Unknown error_style \'{error_style}\', ignoring")
+        return label
 
     def grow_x(ax):
         ticks = ax.get_xticks()
@@ -242,12 +266,13 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     # Pop keyword arguments
     levels = kwargs.pop('levels', compute_sigma_levels([1.0, 2.0]))
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
-    n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 1)
-    if n_uncertainty_digits > 1:
-        warnings.warn('Using n_uncertainty_digits > 1 may cause ambiguous forms for the error estimates. Check these carefully.')
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
+    error_style = kwargs.pop('error_style', 'parenthesis') # How the error estimates appear
+    n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 1)
+    if n_uncertainty_digits > 1 and error_style == 'parenthesis':
+        warnings.warn("Using n_uncertainty_digits > 1 with error_style == \'parenthesis\' may cause ambiguous forms for the error estimates. Check these carefully.")
     colors = kwargs.pop('colors', ['whitesmoke', 'black'])
     n_ticks = kwargs.pop('n_ticks', 2)
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
@@ -305,7 +330,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             n_dec = decimals[i]
             low, median, high = low_median_high(x, quantiles, weights)
             label = labels[i] if labels is not None else ''
-            title = diagonal_title(label, median, low, high, n_dec, n_uncertainty_digits)
+            title = diagonal_title(label, error_style, median, low, high, n_dec, n_uncertainty_digits)
             ax.set_title(title, fontsize=fontsize, loc=title_loc[i], x=title_x[i])
         if plot_estimates:
             c = colors[-1]
