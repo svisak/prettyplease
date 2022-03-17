@@ -232,6 +232,9 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     # The length of quantiles must be 2
     assert(len(quantiles) == 2)
 
+    # Get number of dimensions immediately
+    ndim = data.shape[1]
+
     # Pop keyword arguments
     levels = kwargs.pop('levels', compute_sigma_levels([1.0, 2.0]))
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
@@ -257,7 +260,6 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         colors = ['whitesmoke', colors]
 
     density_cmap = LinearSegmentedColormap.from_list("density_cmap", colors=colors)
-    ndim = data.shape[1]
 
     # Determine suitable number of digits to show
     decimals = [determine_num_decimals(column, n_uncertainty_digits, weights) for column in data.T]
