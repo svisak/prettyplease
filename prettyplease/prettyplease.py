@@ -97,7 +97,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     :param n_uncertainty_digits:
         Determines to how many significant digits the uncertainty is computed.
         This directly affects how estimates and ticks are displayed.
-        Default: 2
+        Default: 1
 
     :param labels:
         List of parameter labels. Should be the same length as data.shape[1]
@@ -235,7 +235,9 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     # Pop keyword arguments
     levels = kwargs.pop('levels', compute_sigma_levels([1.0, 2.0]))
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
-    n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 2)
+    n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 1)
+    if n_uncertainty_digits > 1:
+        warnings.warn('Using n_uncertainty_digits > 1 may cause ambiguous forms for the error estimates. Check these carefully.')
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
