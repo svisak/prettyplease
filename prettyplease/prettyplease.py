@@ -120,7 +120,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
 
     :param n_ticks:
         (Maximum) number of ticks to show on each axis.
-        Default: 4
+        Default: 2
 
     :param figsize:
         The figsize. Either a tuple or None.
@@ -242,7 +242,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
     colors = kwargs.pop('colors', ['whitesmoke', 'black'])
-    n_ticks = kwargs.pop('n_ticks', 4)
+    n_ticks = kwargs.pop('n_ticks', 2)
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
