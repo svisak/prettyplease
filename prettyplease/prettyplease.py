@@ -149,8 +149,8 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     def determine_num_decimals(x, n_uncertainty_digits, weights):
         n_extra_digits = n_uncertainty_digits - 1
         low, median, high = low_median_high(x, [0.16, 0.84], weights)
-        decimals_low = -decimal.Decimal(low).adjusted() + n_extra_digits
-        decimals_high = -decimal.Decimal(high).adjusted() + n_extra_digits
+        decimals_low = -int(np.floor(np.log10(np.abs(low)))) + n_extra_digits
+        decimals_high = -int(np.floor(np.log10(np.abs(high)))) + n_extra_digits
         decimals = max(decimals_low, decimals_high)
         return max(0, decimals)
 
