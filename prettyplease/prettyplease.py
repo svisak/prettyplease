@@ -130,12 +130,16 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Fontsize to use. Affects all text.
         Default: 10
 
-    :param title_xlocation:
-        Determines the horizontal position of the parameter estimates.
-        Should be a list of length data.shape[1]. Possible values are
-        'left', 'center', 'right', and floats. A value of 0.5 corresponds
-        to 'center'.
-        Default: ['center'] * data.shape[1]
+    :param title_loc:
+        Determines the horizontal alignment of the axes titles.
+        Can be either a string or a list of strings.
+        Possible string values are 'left', 'center', 'right'.
+        Default: 'left'
+
+    :param title_x:
+        Determines the horizontal position of the axes titles.
+        Can be either a float or a list of floats.
+        Default: None
 
     :param linewidth:
         Linewidth to use in plots.
@@ -250,7 +254,14 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
     lw = kwargs.pop('linewidth', 0.7)
-    title_xlocation = kwargs.pop('title_xlocation', ['center']*data.shape[1])
+    title_loc = kwargs.pop('title_loc', 'left')
+    title_x = kwargs.pop('title_x', None)
+    if type(title_loc) is str:
+        title_loc = [title_loc] * ndim
+    if title_x is None:
+        title_x = [0.1 if tmp == 'left' else 0.5 for tmp in title_loc]
+    if type(title_x) is float:
+        title_x = [title_x] * ndim
 
     # Color scheme. If colors is a string then the color scheme is
     # "white plus the specified color".
@@ -294,14 +305,8 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             n_dec = decimals[i]
             low, median, high = low_median_high(x, quantiles, weights)
             label = labels[i] if labels is not None else ''
-            title = diagonal_title(label, median, low, high, n_dec)
-            if type(title_xlocation[i]) is str:
-                ax.set_title(title, fontsize=fontsize, loc=title_xlocation[i])
-            elif type(title_xlocation[i]) is float:
-                ax.set_title(title, fontsize=fontsize, x=title_xlocation[i])
-            else:
-                warnings.warn(f'title_xlocation[{i}] has incompatible type {type(title_xlocation[i])}, using \'center\'')
-                ax.set_title(title, fontsize=fontsize, loc='center')
+            title = diagonal_title(label, median, low, high, n_dec, n_uncertainty_digits)
+            ax.set_title(title, fontsize=fontsize, loc=title_loc[i], x=title_x[i])
         if plot_estimates:
             c = colors[-1]
             [ax.axvline(weighted_quantile(x, [q], weights), ls='-.', color=c, lw=lw) for q in quantiles]
