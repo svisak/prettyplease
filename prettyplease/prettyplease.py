@@ -198,35 +198,6 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             warnings.warn(f"Unknown error_style \'{error_style}\', ignoring")
         return label
 
-    def grow_x(ax):
-        ticks = ax.get_xticks()
-        lim = ax.get_xlim()
-        low, high, changed = new_limits(ticks, lim, 7)
-        if changed:
-            ax.set_xlim(low, high)
-
-    def grow_y(axes, row):
-        ax = axes[row, 0]
-        ticks = ax.get_yticks()
-        lim = ax.get_ylim()
-        low, high, changed = new_limits(ticks, lim, 8)
-        if changed:
-            for ax in axes[row, :row]:
-                ax.set_ylim(low, high)
-
-    def new_limits(ticks, limits, tick_free_zone_factor):
-        low = limits[0]
-        high = limits[1]
-        r = high - low
-        red_zone = r / tick_free_zone_factor
-        ticks = [t for t in ticks if t >= low and t <= high]
-        changed = False
-        if ticks[0] < low + red_zone or ticks[-1] > high - red_zone:
-            low = low - red_zone
-            high = high + red_zone
-            changed = True
-        return (low, high, changed)
-
     def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, n_contourf_levels=30):
         hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights)
         hist = hist.T
@@ -375,7 +346,6 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ax.xaxis.set_major_locator(locator)
         if decimals[i] >= 5:
             ax.xaxis.set_major_formatter(formatters[i])
-        grow_x(ax)
         [l.set_fontsize(fontsize) for l in ax.get_xticklabels()]
         [l.set_rotation(xticklabel_rotation) for l in ax.get_xticklabels()]
         [l.set_horizontalalignment('right') for l in ax.get_xticklabels()]
@@ -385,7 +355,6 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ax.yaxis.set_major_locator(locator)
         if decimals[i] >= 5:
             ax.yaxis.set_major_formatter(formatters[i])
-        grow_y(axes, i)
         [l.set_fontsize(fontsize) for l in ax.get_yticklabels()]
 
     # Adjust plot
