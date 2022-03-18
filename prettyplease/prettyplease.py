@@ -144,6 +144,11 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     :param linewidth:
         Linewidth to use in plots.
         Default: 0.6
+
+    :param return_axes:
+        If True, the function returns the (fig, axes) tuple.
+        If False, the return value is fig.
+        Default: False
     """
 
     def determine_num_decimals(x, n_uncertainty_digits, weights):
@@ -287,6 +292,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         title_x = [0.1 if tmp == 'left' else 0.5 for tmp in title_loc]
     if type(title_x) is float:
         title_x = [title_x] * ndim
+    return_axes = kwargs.pop('return_axes', False)
 
     # Color scheme. If colors is a string then the color scheme is
     # "white plus the specified color".
@@ -385,4 +391,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     # Adjust plot
     fig.subplots_adjust(wspace=0, hspace=0)
     fig.align_labels()
-    return fig
+    if return_axes:
+        return (fig, axes)
+    else:
+        return fig
