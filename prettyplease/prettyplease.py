@@ -99,6 +99,11 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         This directly affects how estimates and ticks are displayed.
         Default: 1
 
+    :param error_style:
+        Defines how the error estimates are displayed.
+        Options are: 'plusminus', 'parenthesis', and None.
+        Default: 'plusminus'
+
     :param labels:
         List of parameter labels. Should be the same length as data.shape[1]
         Default: None
@@ -299,7 +304,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
-    error_style = kwargs.pop('error_style', 'parenthesis') # How the error estimates appear
+    error_style = kwargs.pop('error_style', 'plusminus') # How the error estimates appear
     n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 1)
     if n_uncertainty_digits > 1 and error_style == 'parenthesis':
         warnings.warn("Using n_uncertainty_digits > 1 with error_style == \'parenthesis\' may cause ambiguous forms for the error estimates. Check these carefully.")
