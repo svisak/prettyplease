@@ -198,6 +198,57 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
             warnings.warn(f"Unknown error_style \'{error_style}\', ignoring")
         return label
 
+    def nice_ticks(lim, n):
+        '''
+        Find suitable tick locations.
+        The builtins (MaxNLocator etc.) are not suitable here.
+        '''
+        # Total length, division points, division size, division midpoints
+        diff = lim[1] - lim[0]
+        div_size = diff / (n+1)
+        div_points = []
+        for i in range(1, n+1):
+            div_points.append(lim[0]+i*div_size)
+
+        # Compute minimum number of decimals needed
+        # Negative decimals means we round integer numbers
+        n_dec = -int(np.floor(np.log10(np.abs(diff))))
+
+        # Find nice ticks
+        ticks = None
+        ok = False
+        counter = -1
+        while not ok:
+            counter += 1
+            if counter > 3:
+                print('Unable to find suitable ticks, using whatever matplotlib decides')
+                return None
+            tmp = n_dec + counter
+            ticks = [np.around(div_points[i], decimals=tmp) for i in range(n)]
+            margin = (div_points[1]-div_points[0]) * 0.15
+            all_ok = True
+            for i in range(len(ticks)):
+                low = div_points[i]-margin
+                high = div_points[i]+margin
+                if ticks[i] < low or ticks[i] > high:
+                    all_ok = False
+            ok = all_ok
+        n_dec = n_dec + counter
+
+        # Make sure the ticks are evenly spaced.
+        # If not, increase number of decimals by one and take averages.
+        uneven = False
+        for i in range(2, n, 2):
+            tmp1 = ticks[i-2]
+            tmp2 = ticks[i]
+            midtick = ticks[i-2] + (ticks[i]-ticks[i-2])/2
+            rounded_midtick = np.around(midtick, decimals=n_dec+1)
+            if rounded_midtick != ticks[i-1]:
+                uneven = True
+            if uneven:
+                ticks[i-1] = rounded_midtick
+        return ticks
+
     def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, n_contourf_levels=30):
         hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights)
         hist = hist.T
