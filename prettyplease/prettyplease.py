@@ -119,7 +119,10 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Default: ['whitesmoke', 'black']
 
     :param n_ticks:
-        (Maximum) number of ticks to show on each axis.
+        Number of ticks to show on each axis.
+        Must currently be >= 2 or None, or a list of such values.
+        Choosing None results in a considerable speedup, with
+        the obvious downside of not showing any tick marks.
         Default: 2
 
     :param figsize:
@@ -331,6 +334,8 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     # n_ticks can be either an int or a list
     if type(n_ticks) is int:
         n_ticks = [n_ticks] * ndim
+    if n_ticks is None:
+        n_ticks = [None] * ndim
     assert(len(n_ticks) == ndim)
 
     if figsize is None:
