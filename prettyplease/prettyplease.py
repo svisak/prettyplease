@@ -159,6 +159,11 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Default: False
     """
 
+    def automatic_figsize(ndim):
+        base = 4.8
+        size = base + base * (ndim // 8)
+        return (size, size)
+
     def determine_num_decimals(x, n_uncertainty_digits, weights):
         n_extra_digits = n_uncertainty_digits - 1
         low, median, high = low_median_high(x, [0.16, 0.84], weights)
@@ -344,9 +349,8 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     assert(len(n_ticks) == ndim)
 
     if figsize is None:
-        # TODO This autoscaling is very crude
-        tmp = 5 + ndim
-        figsize = (tmp, tmp)
+        figsize = automatic_figsize(ndim)
+
     tmp = {}
     tmp['squeeze'] = False
     tmp['sharex'] = 'col' # We cannot sharey because of the ylim on the diagonal
