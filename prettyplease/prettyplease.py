@@ -397,20 +397,24 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     # Ticks
     formatters = [ticker.FormatStrFormatter(rf'$%.{max(dec-1,1)}f$') for dec in decimals]
     for i in range(ndim):
-        ax = axes[-1,i]
-        locator = ticker.MaxNLocator(n_ticks[i])
-        ax.xaxis.set_major_locator(locator)
+        xlim = axes[-1, i].get_xlim()
+        ticks = nice_ticks(xlim, n_ticks[i]) if n_ticks[i] is not None else None
+        if ticks is not None:
+            axes[-1, i].set_xticks(ticks)
+            if i >= 1:
+                axes[i, 0].set_yticks(ticks)
         if decimals[i] >= 5:
-            ax.xaxis.set_major_formatter(formatters[i])
+            axes[-1, i].xaxis.set_major_formatter(formatters[i])
+            axes[i, 0].yaxis.set_major_formatter(formatters[i])
+
+    # Ticklabel rotation, alignment, fontsize
+    for i in range(ndim):
+        ax = axes[-1,i]
         [l.set_fontsize(fontsize) for l in ax.get_xticklabels()]
         [l.set_rotation(xticklabel_rotation) for l in ax.get_xticklabels()]
         [l.set_horizontalalignment('right') for l in ax.get_xticklabels()]
     for i in range(1,ndim):
         ax = axes[i,0]
-        locator = ticker.MaxNLocator(n_ticks[i])
-        ax.yaxis.set_major_locator(locator)
-        if decimals[i] >= 5:
-            ax.yaxis.set_major_formatter(formatters[i])
         [l.set_fontsize(fontsize) for l in ax.get_yticklabels()]
 
     # Adjust plot
