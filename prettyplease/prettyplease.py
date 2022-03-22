@@ -121,7 +121,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     :param colors:
         Color scheme to use. May be either a single color string
         or a list of colors.
-        Default: ['whitesmoke', 'black']
+        Default: ['whitesmoke', 'xkcd:royal']
 
     :param n_ticks:
         Number of ticks to show on each axis.
@@ -308,7 +308,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 1)
     if n_uncertainty_digits > 1 and error_style == 'parenthesis':
         warnings.warn("Using n_uncertainty_digits > 1 with error_style == \'parenthesis\' may cause ambiguous forms for the error estimates. Check these carefully.")
-    colors = kwargs.pop('colors', ['whitesmoke', 'black'])
+    colors = kwargs.pop('colors', ['whitesmoke', 'xkcd:royal'])
     n_ticks = kwargs.pop('n_ticks', 2)
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
