@@ -66,13 +66,13 @@ def weighted_quantile(values, quantiles, weights=None,
         weighted_quantiles /= np.sum(weights)
     return np.interp(quantiles, weighted_quantiles, values)
 
-def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
+def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     """
     Create a pretty corner plot.
 
     :param bins:
         The number of bins to use in both the 1D and 2D histograms.
-        Default: 30
+        Default: 20
 
     :param levels:
         The levels of the 2D contours showed in the lower triangle.
