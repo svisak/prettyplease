@@ -66,13 +66,13 @@ def weighted_quantile(values, quantiles, weights=None,
         weighted_quantiles /= np.sum(weights)
     return np.interp(quantiles, weighted_quantiles, values)
 
-def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
+def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     """
     Create a pretty corner plot.
 
     :param bins:
         The number of bins to use in both the 1D and 2D histograms.
-        Default: 30
+        Default: 20
 
     :param levels:
         The levels of the 2D contours showed in the lower triangle.
@@ -121,7 +121,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     :param colors:
         Color scheme to use. May be either a single color string
         or a list of colors.
-        Default: ['whitesmoke', 'black']
+        Default: ['whitesmoke', 'xkcd:royal']
 
     :param n_ticks:
         Number of ticks to show on each axis.
@@ -158,6 +158,11 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
         If False, the return value is fig.
         Default: False
     """
+
+    def automatic_figsize(ndim):
+        base = 4.8
+        size = base + base * (ndim // 8)
+        return (size, size)
 
     def determine_num_decimals(x, n_uncertainty_digits, weights):
         n_extra_digits = n_uncertainty_digits - 1
@@ -308,7 +313,7 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 1)
     if n_uncertainty_digits > 1 and error_style == 'parenthesis':
         warnings.warn("Using n_uncertainty_digits > 1 with error_style == \'parenthesis\' may cause ambiguous forms for the error estimates. Check these carefully.")
-    colors = kwargs.pop('colors', ['whitesmoke', 'black'])
+    colors = kwargs.pop('colors', ['whitesmoke', 'xkcd:royal'])
     n_ticks = kwargs.pop('n_ticks', 2)
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
@@ -344,9 +349,8 @@ def corner(data, bins=30, quantiles=[0.16, 0.84], weights=None, **kwargs):
     assert(len(n_ticks) == ndim)
 
     if figsize is None:
-        # TODO This autoscaling is very crude
-        tmp = 5 + ndim
-        figsize = (tmp, tmp)
+        figsize = automatic_figsize(ndim)
+
     tmp = {}
     tmp['squeeze'] = False
     tmp['sharex'] = 'col' # We cannot sharey because of the ylim on the diagonal
