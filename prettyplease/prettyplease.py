@@ -475,6 +475,26 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ax = axes[i,0]
         [l.set_fontsize(fontsize) for l in ax.get_yticklabels()]
 
+
+    # This is just for debugging/temporary use.
+    # Print the row and column in each square.
+    if printrowcol:
+        for row in range(ndim):
+            for col in range(row+1):
+                ax = axes[row,col]
+                ax.text(0.1, 0.8, f'({row},{col})', transform=ax.transAxes)
+
+    # Make sure the axis limits are the same
+    for row in range(1,ndim):
+        bottom, top = axes[row, 0].get_ylim()
+        for col in range(1,row):
+            bottom2, top2 = axes[row, col].get_ylim()
+            try:
+                assert(np.abs(bottom2-bottom) < 1e-14)
+                assert(np.abs(top2-top) < 1e-14)
+            except AssertionError:
+                raise ValueError(f'Row {row} has inconsistent y-limits')
+
     # Adjust plot
     fig.subplots_adjust(wspace=0, hspace=0)
     fig.align_labels()
