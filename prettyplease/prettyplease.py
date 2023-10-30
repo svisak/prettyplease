@@ -22,50 +22,6 @@ from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
 import warnings
 
-def compute_sigma_levels(sigmas):
-    return 1.0 - np.exp(-0.5 * np.array(sigmas) ** 2)
-
-def contour_levels(grid, levels=compute_sigma_levels([1.0, 2.0])):
-    """Compute contour levels for a gridded 2D posterior"""
-    sorted_ = np.flipud(np.sort(grid.ravel()))
-    pct = np.cumsum(sorted_) / np.sum(sorted_)
-    cutoffs = np.searchsorted(pct, np.array(levels))
-    return np.sort(sorted_[cutoffs])
-
-def weighted_quantile(values, quantiles, weights=None,
-                      values_sorted=False, old_style=False):
-    """
-    Very close to numpy.percentile, but supports weights.
-    :param values: numpy.array with data
-    :param weights: array-like of the same length as `values'
-    :param values_sorted: bool, if True, then will avoid sorting of
-        initial array
-    :param old_style: if True, will correct output to be consistent
-        with numpy.percentile.
-    :return: numpy.array with computed quantiles.
-    """
-    values = np.array(values)
-    quantiles = np.array(quantiles)
-    if weights is None:
-        return np.quantile(values, quantiles)
-    weights = np.array(weights)
-    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
-        'quantiles should be in [0, 1]'
-
-    if not values_sorted:
-        sorter = np.argsort(values)
-        values = values[sorter]
-        weights = weights[sorter]
-
-    weighted_quantiles = np.cumsum(weights) - 0.5 * weights
-    if old_style:
-        # To be convenient with numpy.percentile
-        weighted_quantiles -= weighted_quantiles[0]
-        weighted_quantiles /= weighted_quantiles[-1]
-    else:
-        weighted_quantiles /= np.sum(weights)
-    return np.interp(quantiles, weighted_quantiles, values)
-
 def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     """
     Create a pretty corner plot.
@@ -182,141 +138,6 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Default: False
     """
 
-    def automatic_figsize(ndim):
-        base = 4.8
-        size = base + base * (ndim // 8)
-        return (size, size)
-
-    def determine_num_decimals(x, n_uncertainty_digits, weights):
-        n_extra_digits = n_uncertainty_digits - 1
-        low, median, high = low_median_high(x, [0.16, 0.84], weights)
-        decimals_low = -int(np.floor(np.log10(np.abs(low)))) + n_extra_digits
-        decimals_high = -int(np.floor(np.log10(np.abs(high)))) + n_extra_digits
-        return max(decimals_low, decimals_high)
-
-    def low_median_high(x, quantiles, weights):
-        median = weighted_quantile(x, [0.5], weights=weights)[0]
-        tmp = weighted_quantile(x, quantiles, weights=weights)
-        low = tmp[0] - median
-        high = tmp[1] - median
-        return (low, median, high)
-
-    def float_to_leading_integers(val, n_dig):
-        '''
-        Discards any decimal points and leading zeros
-        and returns an integer with n_dig digits.
-        '''
-        exp = decimal.Decimal(val).adjusted()
-        leading = np.abs(val/10**(exp-(n_dig-1)))
-        return decimal.Decimal(leading).to_integral_value()
-
-    def diagonal_title(label, error_style, mid, low, high, n_dec, n_uncertainty_digits):
-        fmt = f'.{max(n_dec,0)}f'
-        mid = np.around(mid, n_dec)
-        mid = f'{mid:{fmt}}'
-        label = label + '\n' + rf'${mid}$' if label is not None else ''
-        if error_style == 'parenthesis':
-            low = float_to_leading_integers(low, n_uncertainty_digits)
-            high = float_to_leading_integers(high, n_uncertainty_digits)
-            if n_dec < 0:
-                low *= 10**(-n_dec)
-                high *= 10**(-n_dec)
-            label += rf'$(_{{{low}}}^{{{high}}})$'
-        elif error_style == 'plusminus':
-            low = np.around(low, n_dec)
-            low = f'{low:{fmt}}'
-            high = np.around(high, n_dec)
-            high = f'+{high:{fmt}}'
-            label += rf'$_{{{low}}}^{{{high}}}$'
-        elif error_style is None:
-            pass
-        else:
-            warnings.warn(f"Unknown error_style \'{error_style}\', ignoring")
-        return label
-
-    def nice_ticks(lim, n):
-        '''
-        Find suitable tick locations.
-        The builtins (MaxNLocator etc.) are not suitable here.
-        '''
-        # Total length, division points, division size, division midpoints
-        diff = lim[1] - lim[0]
-        div_size = diff / (n+1)
-        div_points = []
-        for i in range(1, n+1):
-            div_points.append(lim[0]+i*div_size)
-
-        # Compute minimum number of decimals needed
-        # Negative decimals means we round integer numbers
-        n_dec = -int(np.floor(np.log10(np.abs(diff))))
-
-        # Find nice ticks
-        ticks = None
-        ok = False
-        counter = -1
-        while not ok:
-            counter += 1
-            if counter > 3:
-                print('Unable to find suitable ticks, using whatever matplotlib decides')
-                return None
-            tmp = n_dec + counter
-            ticks = [np.around(div_points[i], decimals=tmp) for i in range(n)]
-            margin = (div_points[1]-div_points[0]) * 0.15
-            all_ok = True
-            for i in range(len(ticks)):
-                low = div_points[i]-margin
-                high = div_points[i]+margin
-                if ticks[i] < low or ticks[i] > high:
-                    all_ok = False
-            ok = all_ok
-        n_dec = n_dec + counter
-
-        # Make sure the ticks are evenly spaced.
-        # If not, increase number of decimals by one and take averages.
-        uneven = False
-        for i in range(2, n, 2):
-            tmp1 = ticks[i-2]
-            tmp2 = ticks[i]
-            midtick = ticks[i-2] + (ticks[i]-ticks[i-2])/2
-            rounded_midtick = np.around(midtick, decimals=n_dec+1)
-            if rounded_midtick != ticks[i-1]:
-                uneven = True
-            if uneven:
-                ticks[i-1] = rounded_midtick
-        return ticks
-
-    def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, n_contourf_levels=30):
-        hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights)
-        hist = hist.T
-        extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-        locator = ticker.MaxNLocator(n_contourf_levels, min_n_ticks=1)
-        lev = locator.tick_values(np.min(hist), np.max(hist))
-        lev[0] = lev[0] if lev[0] > 0 else 1
-        try:
-            ax.contourf(hist, extent=extent, cmap=cmap, levels=lev, extend='max')
-        except ValueError:
-            # ax.contourf failed
-            #warnings.warn(f'contourf failed, decreasing n_contourf_levels to {n_contourf_levels}')
-            n_contourf_levels -= 1
-            if n_contourf_levels <= 5:
-                warnings.warn('Could not compute contourf levels, falling back to scatter plot')
-                plot_joint_scatter(ax, x1, x2, 'gray', weights)
-            plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, n_contourf_levels=n_contourf_levels)
-        tmp = contour_levels(hist, levels)
-        if levels is not None:
-            try:
-                ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
-            except ValueError:
-                warnings.warn('Could not compute increasing contour levels, omitting contours')
-
-    def plot_joint_scatter(ax, x1, x2, color, weights):
-        ax.plot(x1, x2, color=color, marker='.', ls='', alpha=0.2)
-        if weights is not None:
-            warnings.warn('The specified weights will be disregarded for scatter plots!')
-
-    # Nicer warning messages
-    def format_warning(message, category, filename, lineno, file=None, line=None):
-        return f'{filename}:{lineno}: {category.__name__}: {message}\n'
     warnings.formatwarning = format_warning
 
     # The length of quantiles must be 2
@@ -502,3 +323,191 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         return (fig, axes)
     else:
         return fig
+
+
+def compute_sigma_levels(sigmas):
+    return 1.0 - np.exp(-0.5 * np.array(sigmas) ** 2)
+
+def contour_levels(grid, levels=compute_sigma_levels([1.0, 2.0])):
+    """Compute contour levels for a gridded 2D posterior"""
+    sorted_ = np.flipud(np.sort(grid.ravel()))
+    pct = np.cumsum(sorted_) / np.sum(sorted_)
+    cutoffs = np.searchsorted(pct, np.array(levels))
+    return np.sort(sorted_[cutoffs])
+
+def weighted_quantile(values, quantiles, weights=None,
+                      values_sorted=False, old_style=False):
+    """
+    Very close to numpy.percentile, but supports weights.
+    :param values: numpy.array with data
+    :param weights: array-like of the same length as `values'
+    :param values_sorted: bool, if True, then will avoid sorting of
+        initial array
+    :param old_style: if True, will correct output to be consistent
+        with numpy.percentile.
+    :return: numpy.array with computed quantiles.
+    """
+    values = np.array(values)
+    quantiles = np.array(quantiles)
+    if weights is None:
+        return np.quantile(values, quantiles)
+    weights = np.array(weights)
+    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
+        'quantiles should be in [0, 1]'
+
+    if not values_sorted:
+        sorter = np.argsort(values)
+        values = values[sorter]
+        weights = weights[sorter]
+
+    weighted_quantiles = np.cumsum(weights) - 0.5 * weights
+    if old_style:
+        # To be convenient with numpy.percentile
+        weighted_quantiles -= weighted_quantiles[0]
+        weighted_quantiles /= weighted_quantiles[-1]
+    else:
+        weighted_quantiles /= np.sum(weights)
+    return np.interp(quantiles, weighted_quantiles, values)
+
+def automatic_figsize(ndim):
+    base = 4.8
+    size = base + base * (ndim // 8)
+    return (size, size)
+
+def determine_num_decimals(x, n_uncertainty_digits, weights):
+    n_extra_digits = n_uncertainty_digits - 1
+    low, median, high = low_median_high(x, [0.16, 0.84], weights)
+    decimals_low = -int(np.floor(np.log10(np.abs(low)))) + n_extra_digits
+    decimals_high = -int(np.floor(np.log10(np.abs(high)))) + n_extra_digits
+    return max(decimals_low, decimals_high)
+
+def low_median_high(x, quantiles, weights):
+    median = weighted_quantile(x, [0.5], weights=weights)[0]
+    tmp = weighted_quantile(x, quantiles, weights=weights)
+    low = tmp[0] - median
+    high = tmp[1] - median
+    return (low, median, high)
+
+def float_to_leading_integers(val, n_dig):
+    '''
+    Discards any decimal points and leading zeros
+    and returns an integer with n_dig digits.
+    '''
+    exp = decimal.Decimal(val).adjusted()
+    leading = np.abs(val/10**(exp-(n_dig-1)))
+    return decimal.Decimal(leading).to_integral_value()
+
+def diagonal_title(label, error_style, mid, low, high, n_dec, n_uncertainty_digits):
+    fmt = f'.{max(n_dec,0)}f'
+    mid = np.around(mid, n_dec)
+    mid = f'{mid:{fmt}}'
+    label = label + '\n' + rf'${mid}$' if label is not None else ''
+    if error_style == 'parenthesis':
+        low = float_to_leading_integers(low, n_uncertainty_digits)
+        high = float_to_leading_integers(high, n_uncertainty_digits)
+        if n_dec < 0:
+            low *= 10**(-n_dec)
+            high *= 10**(-n_dec)
+        label += rf'$(_{{{low}}}^{{{high}}})$'
+    elif error_style == 'plusminus':
+        low = np.around(low, n_dec)
+        low = f'{low:{fmt}}'
+        high = np.around(high, n_dec)
+        high = f'+{high:{fmt}}'
+        label += rf'$_{{{low}}}^{{{high}}}$'
+    elif error_style is None:
+        pass
+    else:
+        warnings.warn(f"Unknown error_style \'{error_style}\', ignoring")
+    return label
+
+def nice_ticks(lim, n):
+    '''
+    Find suitable tick locations.
+    The builtins (MaxNLocator etc.) are not suitable here.
+    '''
+    # Total length, division points, division size, division midpoints
+    diff = lim[1] - lim[0]
+    div_size = diff / (n+1)
+    div_points = []
+    for i in range(1, n+1):
+        div_points.append(lim[0]+i*div_size)
+
+    # Compute minimum number of decimals needed
+    # Negative decimals means we round integer numbers
+    n_dec = -int(np.floor(np.log10(np.abs(diff))))
+
+    # Find nice ticks
+    ticks = None
+    ok = False
+    counter = -1
+    while not ok:
+        counter += 1
+        if counter > 3:
+            print('Unable to find suitable ticks, using whatever matplotlib decides')
+            return None
+        tmp = n_dec + counter
+        ticks = [np.around(div_points[i], decimals=tmp) for i in range(n)]
+        margin = (div_points[1]-div_points[0]) * 0.15
+        all_ok = True
+        for i in range(len(ticks)):
+            low = div_points[i]-margin
+            high = div_points[i]+margin
+            if ticks[i] < low or ticks[i] > high:
+                all_ok = False
+        ok = all_ok
+    n_dec = n_dec + counter
+
+    # Make sure the ticks are evenly spaced.
+    # If not, increase number of decimals by one and take averages.
+    uneven = False
+    for i in range(2, n, 2):
+        tmp1 = ticks[i-2]
+        tmp2 = ticks[i]
+        midtick = ticks[i-2] + (ticks[i]-ticks[i-2])/2
+        rounded_midtick = np.around(midtick, decimals=n_dec+1)
+        if rounded_midtick != ticks[i-1]:
+            uneven = True
+        if uneven:
+            ticks[i-1] = rounded_midtick
+    return ticks
+
+def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, lw, limits=None, n_contourf_levels=30):
+    hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights, range=limits)
+    hist = hist.T
+    extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+    locator = ticker.MaxNLocator(n_contourf_levels, min_n_ticks=1)
+    lev = locator.tick_values(np.min(hist), np.max(hist))
+    lev[0] = lev[0] if lev[0] > 0 else 1
+    # This is a confusing bit of code, I assume contourf will fail.
+    # If it doesn't, I set scatter_fallback to False and continue by calling contour.
+    # Otherwise contour would still be called even if contourf failed, which doesn't make much sense.
+    # TODO reimplement using a loop instead of recursion.
+    scatter_fallback = True
+    try:
+        ax.contourf(hist, extent=extent, cmap=cmap, levels=lev, extend='max')
+        scatter_fallback = False
+    except ValueError:
+        # ax.contourf failed
+        #warnings.warn(f'contourf failed, decreasing n_contourf_levels to {n_contourf_levels}')
+        n_contourf_levels -= 1
+        if n_contourf_levels > 5:
+            plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, lw, limits=limits, n_contourf_levels=n_contourf_levels)
+        else:
+            warnings.warn('Could not compute contourf levels, falling back to scatter plot')
+            plot_joint_scatter(ax, x1, x2, 'gray', weights)
+    tmp = contour_levels(hist, levels)
+    if levels is not None and scatter_fallback is False:
+        try:
+            ax.contour(hist, extent=extent, colors='xkcd:charcoal gray', linewidths=lw, levels=tmp, alpha=0.5)
+        except ValueError:
+            warnings.warn('Could not compute increasing contour levels, omitting contours')
+
+def plot_joint_scatter(ax, x1, x2, color, weights):
+    ax.scatter(x1, x2, color=color, marker='.', alpha=0.2)
+    if weights is not None:
+        warnings.warn('The specified weights will be disregarded for scatter plots!')
+
+# Nicer warning messages
+def format_warning(message, category, filename, lineno, file=None, line=None):
+    return f'{filename}:{lineno}: {category.__name__}: {message}\n'
