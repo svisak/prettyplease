@@ -392,7 +392,8 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     for i in range(ndim):
         x = data[:, i].flatten()
         ax = axes[i, i]
-        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True, weights=weights)
+        r = limits[i] if limits is not None else None
+        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True, weights=weights, range=r)
         ax.set_xticks([])
         ax.set_yticks([])
         if show_estimates:
@@ -414,12 +415,33 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
             x2 = data[:, row]
             if plot_type_2d == 'hist':
                 # The user wants 2D histograms
-                plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels, weights)
+                r = [limits[col], limits[row]] if limits is not None else None
+                plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels, weights, lw, limits=r)
             elif plot_type_2d == 'scatter':
                 # The user wants 2D scatter plots.
                 plot_joint_scatter(ax, x1, x2, colors[-1], weights)
             else:
                 raise ValueError(f'Unrecognized 2D plot type {plot_type_2d}.')
+
+    # Add optional crosshairs
+    if crosshairs is not None:
+        for i in range(ndim):
+            axes[i,i].axvline(crosshairs[i], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
+    for col in range(ndim):
+        for row in range(col+1, ndim):
+            axes[row,col].axvline(crosshairs[col], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
+            axes[row,col].axhline(crosshairs[row], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
+
+
+    # x and y limits
+    if limits is not None:
+        # x-limits
+        for col in range(ndim):
+            axes[-1, col].set_xlim(limits[col])
+        # y-limits
+        for col in range(ndim):
+            for row in range(col+1, ndim):
+                axes[row, col].set_ylim(limits[row])
 
     # Bottom labels
     for col in range(ndim):
