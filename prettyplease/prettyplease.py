@@ -153,6 +153,29 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Linewidth to use in plots.
         Default: 0.6
 
+    :param limits:
+        Axis limits for each parameter.
+        A list of tuples with min and max for each parameter.
+        Default: None
+
+    :param printrowcol:
+        Debugging tool to print (row, col) in each square.
+        Mainly useful if you want manually to add things to the plots.
+        Default: False
+
+    :param crosshairs:
+        A list of values where a vertical or horizontal line will be added,
+        as appropriate. This will thus form a crosshair in the 2D plots.
+        Default: None
+
+    :param crosshairs_color:
+        The color of the crosshairs.
+        Default: (The last color in) colors.
+
+    :param crosshairs_alpha:
+        The opacity of the crosshairs.
+        Default: 0.5.
+
     :param return_axes:
         If True, the function returns the (fig, axes) tuple.
         If False, the return value is fig.
@@ -296,14 +319,20 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         return f'{filename}:{lineno}: {category.__name__}: {message}\n'
     warnings.formatwarning = format_warning
 
-
     # The length of quantiles must be 2
     assert(len(quantiles) == 2)
 
     # Get number of dimensions immediately
     ndim = data.shape[1]
 
-    # Pop keyword arguments
+    # POP KEYWORD ARGUMENTS
+    colors = kwargs.pop('colors', ['whitesmoke', 'xkcd:royal'])
+    # Color scheme. If colors is a string then the color scheme is
+    # "whitesmoke plus the specified color".
+    # If colors is a list the user has completely
+    # specified the color scheme they want.
+    if type(colors) is str:
+        colors = ['whitesmoke', colors]
     levels = kwargs.pop('levels', compute_sigma_levels([1.0, 2.0]))
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
     labels = kwargs.pop('labels', None)
@@ -313,7 +342,6 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     n_uncertainty_digits = kwargs.pop('n_uncertainty_digits', 1)
     if n_uncertainty_digits > 1 and error_style == 'parenthesis':
         warnings.warn("Using n_uncertainty_digits > 1 with error_style == \'parenthesis\' may cause ambiguous forms for the error estimates. Check these carefully.")
-    colors = kwargs.pop('colors', ['whitesmoke', 'xkcd:royal'])
     n_ticks = kwargs.pop('n_ticks', 2)
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
@@ -327,14 +355,13 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         title_x = [0.1 if tmp == 'left' else 0.5 for tmp in title_loc]
     if type(title_x) is float:
         title_x = [title_x] * ndim
+    limits = kwargs.pop('limits', None)
+    printrowcol = kwargs.pop('printrowcol', False)
+    crosshairs = kwargs.pop('crosshairs', None)
+    crosshairs_color = kwargs.pop('crosshairs_color', colors[-1])
+    crosshairs_alpha = kwargs.pop('crosshairs_alpha', 0.5)
     return_axes = kwargs.pop('return_axes', False)
 
-    # Color scheme. If colors is a string then the color scheme is
-    # "white plus the specified color".
-    # If colors is a list the user has completely
-    # specified the color scheme they want.
-    if type(colors) is str:
-        colors = ['whitesmoke', colors]
 
     density_cmap = LinearSegmentedColormap.from_list("density_cmap", colors=colors)
 
