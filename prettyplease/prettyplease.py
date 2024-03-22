@@ -248,10 +248,10 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     if crosshairs is not None:
         for i in range(ndim):
             axes[i,i].axvline(crosshairs[i], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
-    for col in range(ndim):
-        for row in range(col+1, ndim):
-            axes[row,col].axvline(crosshairs[col], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
-            axes[row,col].axhline(crosshairs[row], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
+        for col in range(ndim):
+            for row in range(col+1, ndim):
+                axes[row,col].axvline(crosshairs[col], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
+                axes[row,col].axhline(crosshairs[row], color=crosshairs_color, lw=lw, alpha=crosshairs_alpha)
 
 
     # x and y limits
