@@ -191,6 +191,9 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     crosshairs_alpha = kwargs.pop('crosshairs_alpha', 0.5)
     return_axes = kwargs.pop('return_axes', False)
 
+    # Warn about ignored keywords
+    if len(kwargs.keys()) > 0:
+        warnings.warn(f'Unused keyword argument(s) {list(kwargs.keys())}')
 
     density_cmap = LinearSegmentedColormap.from_list("density_cmap", colors=colors)
 
