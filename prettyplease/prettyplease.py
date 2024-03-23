@@ -75,6 +75,9 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Default: False
 
     :param colors:
+        Synonym for 'colors'.
+
+    :param colors:
         Color scheme to use. May be either a single color string
         or a list of colors.
         Default: ['whitesmoke', 'xkcd:royal']
@@ -147,13 +150,18 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     ndim = data.shape[1]
 
     # POP KEYWORD ARGUMENTS
-    colors = kwargs.pop('colors', ['whitesmoke', 'xkcd:royal'])
     # Color scheme. If colors is a string then the color scheme is
     # "whitesmoke plus the specified color".
     # If colors is a list the user has completely
     # specified the color scheme they want.
+    colors = ['whitesmoke', 'xkcd:royal']
+    if kwargs.get('colors') is not None:
+        colors = kwargs.pop('colors')
+    elif kwargs.get('color') is not None:
+        colors = kwargs.pop('color')
     if type(colors) is str:
         colors = ['whitesmoke', colors]
+    # 2D contour levels to draw using solid lines
     levels = kwargs.pop('levels', compute_sigma_levels([1.0, 2.0]))
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
     labels = kwargs.pop('labels', None)
