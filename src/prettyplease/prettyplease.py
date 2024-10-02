@@ -307,7 +307,6 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ax = axes[i,0]
         [l.set_fontsize(fontsize) for l in ax.get_yticklabels()]
 
-
     # This is just for debugging/temporary use.
     # Print the row and column in each square.
     if printrowcol:
@@ -325,7 +324,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
                 assert(np.abs(bottom2-bottom) < 1e-14)
                 assert(np.abs(top2-top) < 1e-14)
             except AssertionError:
-                raise ValueError(f'Row {row} has inconsistent y-limits')
+                warnings.warn(f"(row, col) = ({row},{col}) has inconsistent y-limits. This may be caused by mixing 2D histograms and 2D scatter plots in the same figure; try specifying plot_type_2d=\'hist\' or plot_type_2d=\'scatter\', or set axis limits manually.")
 
     # Adjust plot
     fig.subplots_adjust(wspace=0, hspace=0)
