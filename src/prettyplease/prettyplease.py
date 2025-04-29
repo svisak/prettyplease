@@ -27,8 +27,12 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     Create a pretty corner plot.
 
     :param bins:
-        The number of bins to use in both the 1D and 2D histograms.
+        The number of bins to use in the 1D histograms.
         Default: 20
+
+    :param bins2d:
+        The number of bins to use in the 2D histograms.
+        Default: bins
 
     :param levels:
         The levels of the 2D contours showed in the lower triangle.
@@ -164,6 +168,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     # 2D contour levels to draw using solid lines
     levels = kwargs.pop('levels', compute_sigma_levels([1.0, 2.0]))
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
+    bins2d = kwargs.pop('bins2d', bins)
     labels = kwargs.pop('labels', None)
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
@@ -248,7 +253,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
             if plot_type_2d == 'hist':
                 # The user wants 2D histograms
                 r = [limits[col], limits[row]] if limits is not None else None
-                plot_joint_distribution(ax, x1, x2, bins, density_cmap, levels, weights, lw, limits=r)
+                plot_joint_distribution(ax, x1, x2, bins2d, density_cmap, levels, weights, lw, limits=r)
             elif plot_type_2d == 'scatter':
                 # The user wants 2D scatter plots.
                 plot_joint_scatter(ax, x1, x2, colors[-1], weights)
@@ -482,8 +487,8 @@ def nice_ticks(lim, n):
             ticks[i-1] = rounded_midtick
     return ticks
 
-def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, lw, limits=None, n_contourf_levels=30):
-    hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins, weights=weights, range=limits)
+def plot_joint_distribution(ax, x1, x2, bins2d, cmap, levels, weights, lw, limits=None, n_contourf_levels=30):
+    hist, xedges, yedges = np.histogram2d(x1, x2, bins=bins2d, weights=weights, range=limits)
     hist = hist.T
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
     locator = ticker.MaxNLocator(n_contourf_levels, min_n_ticks=1)
@@ -502,7 +507,7 @@ def plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, lw, limits=
         #warnings.warn(f'contourf failed, decreasing n_contourf_levels to {n_contourf_levels}')
         n_contourf_levels -= 1
         if n_contourf_levels > 5:
-            plot_joint_distribution(ax, x1, x2, bins, cmap, levels, weights, lw, limits=limits, n_contourf_levels=n_contourf_levels)
+            plot_joint_distribution(ax, x1, x2, bins2d, cmap, levels, weights, lw, limits=limits, n_contourf_levels=n_contourf_levels)
         else:
             warnings.warn('Could not compute contourf levels, falling back to scatter plot')
             plot_joint_scatter(ax, x1, x2, 'gray', weights)
