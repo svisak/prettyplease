@@ -48,6 +48,10 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Values: 'hist', 'scatter'
         Default: 'hist'
 
+    :param histtype:
+        The type 1D histogram to plot. See options in matplotlib.pyplot.hist.
+        Default: 'step'
+
     :param weights:
         Array of weights for each sample. Passed to the histogramming functions
         in numpy. Should have shape (len(data),).
@@ -85,6 +89,10 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Color scheme to use. May be either a single color string
         or a list of colors.
         Default: ['whitesmoke', 'xkcd:royal']
+
+    :param alpha1d:
+        Alpha value for the 1D historams.
+        Default: 1.0
 
     :param n_ticks:
         Number of ticks to show on each axis.
@@ -170,6 +178,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     plot_type_2d = kwargs.pop('plot_type_2d', 'hist')
     bins2d = kwargs.pop('bins2d', bins)
     labels = kwargs.pop('labels', None)
+    histtype = kwargs.pop('histtype', 'step')
     plot_estimates = kwargs.pop('plot_estimates', False) # Show vertical lines at quantiles?
     show_estimates = kwargs.pop('show_estimates', True) # Show median and uncertainty above diagonal
     error_style = kwargs.pop('error_style', 'plusminus') # How the error estimates appear
@@ -181,6 +190,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
     lw = kwargs.pop('linewidth', 0.7)
+    alpha1d = kwargs.pop('alpha1d', 1.0)
     title_loc = kwargs.pop('title_loc', 'left')
     title_x = kwargs.pop('title_x', None)
     if type(title_loc) is str:
@@ -230,7 +240,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         x = data[:, i].flatten()
         ax = axes[i, i]
         r = limits[i] if limits is not None else None
-        ax.hist(x, bins=bins, color=colors[-1], histtype='step', linewidth=lw, density=True, weights=weights, range=r)
+        ax.hist(x, bins=bins, color=colors[-1], histtype=histtype, linewidth=lw, density=True, weights=weights, range=r, alpha=alpha1d)
         ax.set_xticks([])
         ax.set_yticks([])
         if show_estimates:
