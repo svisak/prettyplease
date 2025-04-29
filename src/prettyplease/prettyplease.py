@@ -78,7 +78,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         Whether to add vertical lines at the quantiles in the 1D plots.
         Default: False
 
-    :param colors:
+    :param color:
         Synonym for 'colors'.
 
     :param colors:
