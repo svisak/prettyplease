@@ -50,6 +50,8 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
 
     :param histtype:
         The type 1D histogram to plot. See options in matplotlib.pyplot.hist.
+        In addition to the standard histtypes, this can also be 'accented'
+        which creates a stepfilled histogram with a slight gray edge.
         Default: 'step'
 
     :param weights:
@@ -240,7 +242,14 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         x = data[:, i].flatten()
         ax = axes[i, i]
         r = limits[i] if limits is not None else None
-        ax.hist(x, bins=bins, color=colors[-1], histtype=histtype, linewidth=lw, density=True, weights=weights, range=r, alpha=alpha1d)
+        if histtype != 'accented':
+            # Just pass on the histtype to ax.hist
+            ax.hist(x, bins=bins, color=colors[-1], histtype=histtype, linewidth=lw, density=True, weights=weights, range=r, alpha=alpha1d)
+        else:
+            # Plot an "accented" stepfilled histogram, i.e. a stepfill with a gray edge.
+            # This could probably be done with facecolor+edgecolor but this works well too
+            ax.hist(x, bins=bins, color=colors[-1], histtype='stepfilled', linewidth=lw, density=True, weights=weights, range=r, alpha=alpha1d)
+            ax.hist(x, bins=bins, color='xkcd:dark gray', histtype='step', linewidth=lw/2, density=True, weights=weights, range=r, alpha=alpha1d)
         ax.set_xticks([])
         ax.set_yticks([])
         if show_estimates:
