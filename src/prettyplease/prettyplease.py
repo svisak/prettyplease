@@ -103,6 +103,10 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         the obvious downside of not showing any tick marks.
         Default: 2
 
+    :param minorticks:
+        Whether to display minor ticks or not.
+        Default: False
+
     :param figsize:
         The figsize. Either a tuple or None.
         Default: None.
@@ -188,6 +192,7 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
     if n_uncertainty_digits > 1 and error_style == 'parenthesis':
         warnings.warn("Using n_uncertainty_digits > 1 with error_style == \'parenthesis\' may cause ambiguous forms for the error estimates. Check these carefully.")
     n_ticks = kwargs.pop('n_ticks', 2)
+    minorticks = kwargs.pop('minorticks', False)
     xticklabel_rotation = kwargs.pop('xticklabel_rotation', 45)
     figsize = kwargs.pop('figsize', None)
     fontsize = kwargs.pop('fontsize', 10)
@@ -315,8 +320,14 @@ def corner(data, bins=20, quantiles=[0.16, 0.84], weights=None, **kwargs):
         ticks = nice_ticks(xlim, n_ticks[i]) if n_ticks[i] is not None else None
         if ticks is not None:
             axes[-1, i].set_xticks(ticks)
+            if minorticks:
+                axes[-1, i].minorticks_on()
+                axes[-1, i].tick_params(which='minor', axis='x')
             if i >= 1:
                 axes[i, 0].set_yticks(ticks)
+                if minorticks:
+                    axes[i, 0].minorticks_on()
+                    axes[i, 0].tick_params(which='minor', axis='y')
         if decimals[i] >= 5:
             axes[-1, i].xaxis.set_major_formatter(formatters[i])
             axes[i, 0].yaxis.set_major_formatter(formatters[i])
